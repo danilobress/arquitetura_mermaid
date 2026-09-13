@@ -75,10 +75,10 @@ Fluxo de Exceção: transições de exceção como `AGUARDANDO → DESISTIU` e `
 
 ## 4. Utilização da GenAI
 
-O auxílio na criação do diagrma C4 Model e diagramas de sequencia, desta arquitetura foram realizados com o auxílio de IA Generativa atuando como **Agente Colaborador (Engenheiro / Arquiteto Sênior)**. 
-- A IA auxiliou não apenas na geração rápida da sintaxe do código Mermaid (para o C4 Model e o Sequência), mas principalmente na **questões analíticas de vulnerabilidades do fluxo**.
-- A GenAI ajudou na criação dos diagramas simulando cenários de alta concorrência ("o que acontece se a requisição dobrar?") e sugeririu boas implementações. Porém necessário rever os pontos de melhoria aplicados posteriormente.
-- O refinamento visual dos diagramas para acessibilidade, contraste adequado (Dark Theme) e clareza estrutural foi gerado mediante prompts focados em design de documentação. Porém a GenIA teve dificuldade visual de gerar por exemplo o C4 Model, o que foi preciso diferents iterações para chegar no resultado atual
+O auxílio na criação do diagrama C4 Model e diagramas de sequência, desta arquitetura foram realizados com o auxílio de IA Generativa atuando como **Agente Colaborador (Engenheiro / Arquiteto Sênior)**. 
+- A IA auxiliou não apenas na geração rápida da sintaxe do código Mermaid (para o C4 Model e o Sequência), mas principalmente nas **questões analíticas de vulnerabilidades do fluxo**.
+- A GenAI ajudou na criação dos diagramas simulando cenários de alta concorrência ("o que acontece se a requisição dobrar?") e sugeriu boas implementações. Porém foi necessário rever os pontos de melhoria aplicados posteriormente.
+- O refinamento visual dos diagramas para acessibilidade, contraste adequado (Dark Theme) e clareza estrutural foi gerado mediante prompts focados em design de documentação. Porém a GenAI teve dificuldade visual de gerar por exemplo o C4 Model, o que foi preciso diferentes iterações para chegar no resultado atual
 
 Com isso é possível observar que a GenAI é uma ferramenta de grande auxílio na criação de documentação, mas precisa de supervisão humana para garantir a qualidade do resultado final.
 
@@ -105,11 +105,32 @@ Durante o desenho inicial gerado da arquitetura, algumas decisões foram tomadas
 
 ## 6. Lacunas
 
-As seguintes lacunas foram mapeadas durante o design inicial do sistema. Elas precisavam ser tratadas para que o sistema se tornasse viável e constam agora como mitigadas na arquitetura final, mas exigem atenção durante o desenvolvimento:
+Apesar da documentação apresentar uma visão completa do sistema em C4 e diagramas de sequência, ainda existem diversas informações, regras de negócio e definições técnicas que precisam ser detalhadas antes da implementação. Entre elas:
 
-- **Lacuna de Concorrência:** Clientes impacientes gerando múltiplos tickets acidentalmente ao dar *refresh* no PWA na fila do restaurante.
-  - *Mitigação Projetada:* Cabeçalhos de `Idempotency-Key` integrados à transação atômica do cache, devolvendo um 200 OK amigável invés de um erro para retentativas.
-- **Lacuna de Abandono:** Clientes que são chamados via aplicativo e nunca comparecem à recepção, segurando mesas vitais para o negócio.
-  - *Mitigação Projetada:* Tolerância estrita de 5 minutos, processada por um Worker Background autônomo (diagrama B), com fallback instantâneo que avisa a Hostess para passar o próximo da fila.
-- **Lacuna de Falha de Mensageria:** Quedas ou instabilidade na operadora de SMS/WhatsApp que deixariam os clientes sem serem notificados, travando indiretamente a operação.
-  - *Mitigação Projetada:* API desenhada de forma reativa a Webhooks de falha. Ao receber o evento `failed`, o sistema avisa o tablet da Hostess pelo socket, aplicando o fallback manual (chamada de voz pela recepcionista).
+- Qual será o algoritmo ou fórmula exata para calcular o tempo estimado de espera para o cliente?
+- Como será feito o controle de limite de requisições (rate limit) no QR Code para evitar ataques de spam ou DDoS na fila?
+- O que acontece com a fila atual se o banco em memória (Redis) sofrer um *restart* inesperado?
+- Qual mecanismo exato será utilizado para a comunicação em tempo real entre os apps e o backend?
+- Quantas posições na fila um mesmo número de celular (cliente) pode ocupar simultaneamente?
+- Qual o padrão estrutural dos payloads (JSON) e schemas da API na comunicação entre os apps e o backend?
+
+
+---
+
+
+## 7. O que seria necessário para um agente construir o sistema sem inventar decisões?
+
+Embora os diagramas C4 e de Sequência ofereçam uma visão arquitetural completa, para que um agente autônomo escrevesse o código de ponta a ponta sem "alucinar" ou inventar lógicas, a documentação precisaria evoluir para o Nível 3 (Componentes) e Nível 4 (Código). Os itens que deveriam ter na documentação para isso seriam:
+
+- **Contratos de API (OpenAPI/Swagger):** Definição estrita das rotas, métodos HTTP, payloads (JSON) e códigos de status de retorno.
+- **Esquemas de Banco de Dados:** Um modelo Entidade-Relacionamento (ERD) detalhando tabelas, colunas, tipos de dados, chaves primárias/estrangeiras e índices.
+- **Regras de Negócio Matemáticas:** Regras de negócio no geral, como por exemplo o sistema calcula o tempo estimado de espera. Sem isso, a GenIA poderia inventar um cálculo.
+- **Design System / UI:** Mapeamento exato de componentes visuais, tokens de cores e layouts (ex: referências do Figma) para que o Customer Web App e o Tablet App não fossem gerados com interfaces genéricas.
+
+
+---
+
+
+## 8. Conclusão
+
+A arquitetura do WaitList Pro (sistema de gerenciamento de filas de espera eletrônicas para restaurantes) foi pensada para balancear a necessidade de alta disponibilidade, resposta em tempo real e resiliência, garantindo uma boa experiência ao usuário final. O uso de IA generativa como auxílio provou ser uma abordagem importante para desenhar os diagramas e auxiliar na reflexão crítica sobre as decisões arquiteturais, mitigando riscos antes mesmo da implementação. Porém é crucial que um humano faça a revisão final para validar as decisões propostas pela IA e aplicar ajustes finos, pois a IA ainda tem limitações em compreender contextos específicos e regras de negócio complexas.
